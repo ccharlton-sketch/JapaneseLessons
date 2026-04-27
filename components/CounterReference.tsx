@@ -1,0 +1,93 @@
+"use client";
+import { useState } from "react";
+import { getCardsByGroup, COUNTER_GROUPS } from "@/data/counters";
+import { speak } from "@/lib/speech";
+import { useTTSPreference } from "@/lib/useTTSPreference";
+
+// Group cards by their counter suffix for display
+function groupByCounter(cards: ReturnType<typeof getCardsByGroup>) {
+  const map = new Map<string, { usedFor: string; cards: typeof cards }>();
+  for (const card of cards) {
+    if (!map.has(card.counter)) {
+      map.set(card.counter, { usedFor: card.usedFor, cards: [] });
+    }
+    map.get(card.counter)!.cards.push(card);
+  }
+  return map;
+}
+
+interface Props {
+  group: number;
+}
+
+export default function CounterReference({ group }: Props) {
+  const [showReading, setShowReading] = useState(true);
+  const { enabled: ttsEnabled, toggle: toggleTTS } = useTTSPreference();
+  const cards = getCardsByGroup(group);
+  const grouped = groupByCounter(cards);
+  const groupMeta = COUNTER_GROUPS.find((g) => g.id === group);
+
+  return (
+    <div className="space-y-6">
+      {/* Controls */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => setShowReading((r) => !r)}
+          className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+            showReading ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
+          }`}
+        >
+          {showReading ? "Reading ON" : "Reading OFF"}
+        </button>
+        <button
+          onClick={toggleTTS}
+          title={ttsEnabled ? "Mute pronunciation" : "Unmute pronunciation"}
+          className={`text-lg leading-none ml-auto transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
+        >
+          🔊
+        </button>
+      </div>
+      {ttsEnabled && (
+        <p className="text-xs text-muted-foreground -mt-3">Click any row to hear it.</p>
+      )}
+
+      {/* Counter sections */}
+      {[...grouped.entries()].map(([counter, { usedFor, cards: counterCards }]) => (
+        <div key={counter}>
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="text-base font-bold font-japanese">{counter}</span>
+            <span className="text-xs text-muted-foreground">{usedFor}</span>
+          </div>
+          <div className="rounded-xl border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50 text-xs text-muted-foreground">
+                  <th className="text-left px-3 py-2 font-medium">English</th>
+                  <th className="text-left px-3 py-2 font-medium font-japanese">Japanese</th>
+                  {showReading && <th className="text-left px-3 py-2 font-medium">Hint</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {counterCards.map((card, i) => (
+                  <tr
+                    key={card.id}
+                    onClick={() => ttsEnabled && speak(card.reading)}
+                    className={`border-t transition-colors ${
+                      ttsEnabled ? "cursor-pointer hover:bg-primary/5" : ""
+                    } ${i % 2 === 0 ? "bg-background" : "bg-muted/20"}`}
+                  >
+                    <td className="px-3 py-2.5 text-muted-foreground">{card.question}</td>
+                    <td className="px-3 py-2.5 font-japanese text-lg font-medium">{card.answer}</td>
+                    {showReading && (
+                      <td className="px-3 py-2.5 text-xs text-muted-foreground italic">{card.hint}</td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
