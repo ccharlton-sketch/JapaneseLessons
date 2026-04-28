@@ -11,6 +11,8 @@ import {
   AppProgress,
 } from "@/lib/progress";
 import { useTTSPreference } from "@/lib/useTTSPreference";
+import { useAuth } from "@/lib/useAuth";
+import AuthModal from "@/components/AuthModal";
 import FlashCard from "@/components/FlashCard";
 import QuestionCountPicker from "@/components/QuestionCountPicker";
 import { Progress } from "@/components/ui/progress";
@@ -41,6 +43,8 @@ export default function FlashcardsPage() {
   const lessonNum = Number(lesson);
   const router = useRouter();
   const { enabled: ttsEnabled, toggle: toggleTTS } = useTTSPreference();
+  const { user } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
 
   const fullPool = getWordsByLesson(lessonNum);
   const maxQuestions = fullPool.length;
@@ -81,7 +85,7 @@ export default function FlashcardsPage() {
       const score = computeLessonScore(newProgress, allWords);
       const finalProgress = maybeUnlockNext(newProgress, lessonNum, score);
       finalProgress.lessons[lessonNum] = { ...finalProgress.lessons[lessonNum], score };
-      saveProgress(finalProgress);
+      saveProgress(finalProgress, !!user);
       setProgress(finalProgress);
       setSessionCorrect((c) => c + (correct ? 1 : 0));
       setSessionTotal((t) => t + 1);
@@ -166,6 +170,7 @@ export default function FlashcardsPage() {
     const nextUnlocked = progress.lessons[lessonNum + 1]?.unlocked;
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
+        {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
         <div className="max-w-sm w-full text-center flex flex-col gap-4">
           <div className="text-5xl">{pct >= 70 ? "🎉" : "📖"}</div>
           <h2 className="text-2xl font-bold">Lesson {lessonNum} Complete!</h2>
@@ -175,6 +180,15 @@ export default function FlashcardsPage() {
           <p className="text-sm text-muted-foreground">Overall mastery: <strong>{score}%</strong></p>
           {nextUnlocked && lessonNum < 10 && (
             <p className="text-green-600 font-medium text-sm">🔓 Lesson {lessonNum + 1} unlocked!</p>
+          )}
+          {!user && (
+            <p className="text-xs text-muted-foreground border rounded-lg p-3">
+              💾{" "}
+              <button onClick={() => setShowAuth(true)} className="underline hover:text-foreground">
+                Sign up free
+              </button>{" "}
+              to save your progress across devices.
+            </p>
           )}
           <div className="flex flex-col gap-2 mt-2">
             <Button onClick={startQuiz}>Practice Again</Button>

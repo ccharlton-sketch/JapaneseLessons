@@ -44,9 +44,44 @@ export function loadProgress(): AppProgress {
   }
 }
 
-export function saveProgress(p: AppProgress): void {
+export function saveProgress(p: AppProgress, syncToServer = false): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  if (syncToServer) {
+    fetch("/api/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: p }),
+    }).catch(() => {});
+  }
+}
+
+// Merges server progress into local: takes the higher correct/incorrect counts per word
+// and the higher lesson score, so neither side loses data.
+export function mergeProgress(local: AppProgress, server: AppProgress): AppProgress {
+  const words = { ...local.words };
+  for (const [id, sw] of Object.entries(server.words)) {
+    const lw = words[id];
+    if (!lw) {
+      words[id] = sw;
+    } else {
+      words[id] = {
+        correct: Math.max(lw.correct, sw.correct),
+        incorrect: Math.max(lw.incorrect, sw.incorrect),
+        lastSeen: Math.max(lw.lastSeen, sw.lastSeen),
+      };
+    }
+  }
+  const lessons = { ...local.lessons };
+  for (const [key, sl] of Object.entries(server.lessons)) {
+    const ll = lessons[Number(key)];
+    if (!ll || sl.score > ll.score) {
+      lessons[Number(key)] = { ...sl, unlocked: true };
+    } else {
+      lessons[Number(key)] = { ...ll, unlocked: true };
+    }
+  }
+  return { words, lessons, unlockedLesson: 10 };
 }
 
 export function recordAnswer(
