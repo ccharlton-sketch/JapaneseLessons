@@ -46,6 +46,24 @@ There is no test suite. `npm run build` is the primary correctness check — alw
 - **`CounterReference`** — Study table grouped by counter suffix (`〜枚`, `〜本`, etc.) with a reading/hint toggle.
 - **`LessonMap`** / **`CounterGroupMap`** — Navigation grids for lessons and counter groups.
 
+### Auth & database (`lib/auth.ts`, `lib/db.ts`, `lib/useAuth.ts`)
+
+- **Database:** Turso (hosted libSQL). Uses `@prisma/adapter-libsql` + `PrismaLibSql` factory (takes `{ url, authToken }`, NOT a pre-created client). Prisma v7 requires a driver adapter — no `DATABASE_URL` in schema, connection is configured at runtime in `lib/db.ts`.
+- **Auth:** NextAuth v5 (`next-auth@beta`) with JWT session strategy. The Prisma adapter is intentionally NOT used — mixing it with JWT sessions breaks Google OAuth silently (user appears signed in but session never persists). Instead, the `signIn` callback manually upserts the user into the database.
+- **Google OAuth:** Uses `signIn('google', { callbackUrl: window.location.href })` — must allow a full redirect (no `redirect: false`). Local progress is saved to `sessionStorage` before the redirect and merged back on return.
+- **Credentials provider:** Email/password signup hits `POST /api/auth` (custom route) to create the user, then calls `signIn('credentials', { redirect: false })`. JWT strategy is required for credentials to work.
+- **Progress sync:** `saveProgress(p, true)` fires a background `POST /api/progress`. On login, client fetches server progress and calls `mergeProgress(local, server)` — takes the higher correct/incorrect count per word so neither side loses data.
+- **`useAuth`** — wraps `useSession` from next-auth/react. Returns `{ user, loading, signIn, signUp, signOut }` — same interface regardless of provider.
+- **`components/Providers.tsx`** — thin `"use client"` wrapper that holds `<SessionProvider>`, imported by `app/layout.tsx` (which is a server component and can't use hooks directly).
+
+### Deployment
+
+- **Vercel project:** `japanese-lessons` (GitHub-connected, auto-deploys on push to `main`). The production URL is `https://japanese-lessons-pi.vercel.app`. There is a separate `japanese-learnings` project created by the CLI — ignore it.
+- **Required env vars on Vercel:** `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `AUTH_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` (set to `https://japanese-lessons-pi.vercel.app`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+- **Google OAuth redirect URI** registered in Google Cloud Console: `https://japanese-lessons-pi.vercel.app/api/auth/callback/google`. If the production URL ever changes this must be updated.
+- **Prisma migrations:** There is no `prisma migrate` workflow against Turso. Run migrations manually via `turso db shell japanese-learnings < prisma/migrations/<name>/migration.sql`.
+- **`npm run build`** runs `prisma generate && next build` — the generate step is required on Vercel because the generated client is not committed.
+
 ### Key conventions
 
 - All pages are `"use client"` — there is no server-side data fetching.
