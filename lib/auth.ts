@@ -1,12 +1,10 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -34,6 +32,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: { strategy: "jwt" },
   callbacks: {
+    async signIn({ user, account }) {
+      // For Google sign-ins, upsert the user in our database
+      if (account?.provider === "google" && user.email) {
+        const existing = await prisma.user.findUnique({ where: { email: user.email } });
+        if (!existing) {
+          const created = await prisma.user.create({
+            data: { email: user.email, name: user.name, image: user.image },
+          });
+          user.id = created.id;
+        } else {
+          user.id = existing.id;
+        }
+      }
+      return true;
+    },
     jwt({ token, user }) {
       if (user) token.id = user.id;
       return token;
