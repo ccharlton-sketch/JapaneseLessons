@@ -52,10 +52,11 @@ export default function AuthModal({ onClose, onSuccess }: Props) {
   }
 
   async function handleGoogle() {
-    await nextSignIn("google", { redirect: false });
-    await syncProgressAfterLogin();
-    onSuccess?.();
-    onClose();
+    // Save local progress to sessionStorage so we can sync it after Google redirects back
+    try {
+      sessionStorage.setItem("jp_presignin_progress", JSON.stringify(loadProgress()));
+    } catch {}
+    await nextSignIn("google", { callbackUrl: window.location.href });
   }
 
   return (

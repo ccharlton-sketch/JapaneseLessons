@@ -25,6 +25,27 @@ export default function Home() {
     if (saved) setActiveTab(saved);
   }, []);
 
+  // After Google OAuth redirect, merge any pre-signin local progress with server
+  useEffect(() => {
+    if (!user) return;
+    const saved = sessionStorage.getItem("jp_presignin_progress");
+    if (!saved) return;
+    sessionStorage.removeItem("jp_presignin_progress");
+    (async () => {
+      try {
+        const res = await fetch("/api/progress");
+        if (res.ok) {
+          const { data: serverData } = await res.json();
+          const local = JSON.parse(saved);
+          const { mergeProgress, saveProgress } = await import("@/lib/progress");
+          const merged = serverData ? mergeProgress(local, serverData) : local;
+          saveProgress(merged, true);
+          setProgress(merged);
+        }
+      } catch {}
+    })();
+  }, [user]);
+
   // Reload local progress after auth state changes (e.g. after merge on login)
   function refreshProgress() {
     setProgress(loadProgress());
