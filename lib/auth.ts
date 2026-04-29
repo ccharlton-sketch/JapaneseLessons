@@ -33,17 +33,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user, account }) {
-      // For Google sign-ins, upsert the user in our database
       if (account?.provider === "google" && user.email) {
-        const existing = await prisma.user.findUnique({ where: { email: user.email } });
-        if (!existing) {
-          const created = await prisma.user.create({
-            data: { email: user.email, name: user.name, image: user.image },
-          });
-          user.id = created.id;
-        } else {
-          user.id = existing.id;
-        }
+        const existing = await prisma.user.upsert({
+          where: { email: user.email },
+          update: { name: user.name, image: user.image },
+          create: { email: user.email, name: user.name, image: user.image },
+        });
+        user.id = existing.id;
       }
       return true;
     },

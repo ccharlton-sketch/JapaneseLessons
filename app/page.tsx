@@ -19,6 +19,17 @@ export default function Home() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
 
+  // Clean up any OAuth error params from the URL without a page reload
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("error")) {
+      params.delete("error");
+      const clean = window.location.pathname + (params.toString() ? `?${params}` : "");
+      window.history.replaceState({}, "", clean);
+    }
+  }, []);
+
   useEffect(() => {
     setProgress(loadProgress());
     const saved = sessionStorage.getItem("jp_active_tab");
