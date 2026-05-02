@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import KanaKeyboard from "@/components/KanaKeyboard";
 import { speak } from "@/lib/speech";
 import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
+import { Volume2, Mic } from "lucide-react";
 
 type Mode = "jp-to-en" | "en-to-jp";
 type InputMode = "type" | "multiple-choice" | "speak";
@@ -98,33 +99,36 @@ export default function FlashCard({ word, mode, inputMode, choices, ttsEnabled, 
   const correctAnswer = mode === "jp-to-en" ? word.english[0] : word.japanese;
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-lg mx-auto">
-      <Card className="text-center shadow-lg">
-        <CardContent className="pt-8 pb-6">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-4">{promptLabel}</div>
+    <div className="flex flex-col gap-4 w-full max-w-lg mx-auto animate-fade-in">
+      <Card className="text-center card-elevated overflow-hidden">
+        <CardContent className="pt-8 pb-6 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent pointer-events-none" />
+          <div className="relative">
+            <div className="text-xs font-medium text-muted-foreground mb-4 tracking-wide">{promptLabel}</div>
 
-          <button
-            onClick={() => ttsEnabled && speak(mode === "jp-to-en" ? word.reading : word.english[0])}
-            title={ttsEnabled ? "Click to hear pronunciation" : "Pronunciation is muted"}
-            className={`font-bold mb-2 transition-all select-none ${
-              ttsEnabled ? "cursor-pointer hover:opacity-70 active:scale-95" : "cursor-default"
-            } ${mode === "jp-to-en" ? "text-6xl font-japanese block w-full" : "text-3xl block w-full"}`}
-          >
-            {prompt}
-            {ttsEnabled && (
-              <span className="block text-xs text-muted-foreground mt-2 font-normal normal-case tracking-normal">
-                🔊 tap to hear
-              </span>
+            <button
+              onClick={() => ttsEnabled && speak(mode === "jp-to-en" ? word.reading : word.english[0])}
+              title={ttsEnabled ? "Click to hear pronunciation" : "Pronunciation is muted"}
+              className={`font-bold mb-2 select-none transition-press ${
+                ttsEnabled ? "cursor-pointer hover:text-primary active:scale-[0.97]" : "cursor-default"
+              } ${mode === "jp-to-en" ? "text-6xl font-japanese block w-full" : "text-3xl block w-full"}`}
+            >
+              {prompt}
+              {ttsEnabled && (
+                <span className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-3 font-normal normal-case tracking-normal">
+                  <Volume2 className="size-3" strokeWidth={1.5} /> tap to hear
+                </span>
+              )}
+            </button>
+
+            {inputMode === "speak" && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Say <span className="font-japanese font-semibold">{word.japanese}</span> ({word.reading})
+              </p>
             )}
-          </button>
 
-          {inputMode === "speak" && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Say <span className="font-japanese font-semibold">{word.japanese}</span> ({word.reading})
-            </p>
-          )}
-
-          <Badge variant="secondary" className="text-xs capitalize mt-2">{word.category}</Badge>
+            <Badge variant="secondary" className="text-xs capitalize mt-3">{word.category}</Badge>
+          </div>
         </CardContent>
       </Card>
 
@@ -157,13 +161,13 @@ export default function FlashCard({ word, mode, inputMode, choices, ttsEnabled, 
                 <button
                   onClick={startListening}
                   disabled={recState === "listening"}
-                  className={`w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl transition-all shadow-md ${
+                  className={`w-20 h-20 rounded-full border-4 flex items-center justify-center shadow-md transition-press ${
                     recState === "listening"
-                      ? "border-red-500 bg-red-50 dark:bg-red-950/30 animate-pulse scale-110"
-                      : "border-primary bg-background hover:bg-primary/5 active:scale-95"
+                      ? "border-red-500 bg-red-50 dark:bg-red-950/30 animate-[pulse-mic_1.5s_ease-in-out_infinite]"
+                      : "border-primary bg-background hover:bg-primary/5 active:scale-[0.97]"
                   }`}
                 >
-                  🎤
+                  <Mic className="size-8 text-current" strokeWidth={1.5} />
                 </button>
                 <p className="text-sm text-muted-foreground">
                   {recState === "listening" ? "Listening…" : "Tap to speak"}
@@ -172,12 +176,12 @@ export default function FlashCard({ word, mode, inputMode, choices, ttsEnabled, 
             )}
           </div>
         ) : inputMode === "multiple-choice" && choices ? (
-          <div className="grid grid-cols-2 gap-2">
-            {choices.map((c) => (
+          <div className="grid grid-cols-2 gap-3">
+            {choices.map((c, i) => (
               <button
                 key={c}
                 onClick={() => handleSubmit(c)}
-                className={`rounded-xl border-2 border-border py-3 px-4 text-sm font-medium hover:border-primary hover:bg-primary/5 transition-colors text-left ${
+                className={`animate-fade-up stagger-${i + 1} rounded-xl border bg-card py-3.5 px-4 text-sm font-medium card-elevated hover:card-elevated-hover hover:border-primary/50 hover-lift active:scale-[0.97] text-left ${
                   mode === "en-to-jp" ? "font-japanese text-center text-lg" : ""
                 }`}
               >
@@ -218,8 +222,8 @@ export default function FlashCard({ word, mode, inputMode, choices, ttsEnabled, 
         )
       ) : (
         <Card
-          className={`text-center border-2 ${
-            correct ? "border-green-500 bg-green-50 dark:bg-green-950/30" : "border-red-400 bg-red-50 dark:bg-red-950/30"
+          className={`animate-fade-up text-center border ${
+            correct ? "border-green-500/50 bg-green-50/80 dark:bg-green-950/30" : "border-red-400/50 bg-red-50/80 dark:bg-red-950/30"
           }`}
         >
           <CardContent className="py-4">

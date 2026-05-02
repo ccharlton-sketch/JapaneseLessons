@@ -17,6 +17,7 @@ import FlashCard from "@/components/FlashCard";
 import QuestionCountPicker from "@/components/QuestionCountPicker";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Volume2, VolumeX, Trophy, BookOpen, Mic } from "lucide-react";
 
 type Mode = "jp-to-en" | "en-to-jp";
 type InputMode = "type" | "multiple-choice" | "speak";
@@ -92,12 +93,12 @@ export default function FlashcardsPage() {
       if (index + 1 >= allWords.length) setDone(true);
       else setIndex((i) => i + 1);
     },
-    [progress, currentWord, allWords, lessonNum, index]
+    [progress, currentWord, allWords, lessonNum, index, user]
   );
 
   if (!maxQuestions) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-[100dvh] flex items-center justify-center">
         <p className="text-muted-foreground">No words found for lesson {lessonNum}.</p>
       </div>
     );
@@ -106,24 +107,24 @@ export default function FlashcardsPage() {
   // ── Setup screen ──────────────────────────────────────────────────────────
   if (!started) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b">
+      <div className="min-h-[100dvh] bg-ambient">
+        <header className="border-b backdrop-blur-sm bg-background/80 sticky top-0 z-40">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-            <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground text-sm">
+            <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground text-sm transition-colors">
               ← Back
             </button>
-            <span className="font-semibold flex-1">Lesson {lessonNum}</span>
+            <span className="font-bold flex-1">Lesson {lessonNum}</span>
             <button
               onClick={toggleTTS}
               title={ttsEnabled ? "Mute pronunciation" : "Unmute pronunciation"}
-              className={`text-lg leading-none transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
+              className={`leading-none transition-opacity duration-200 ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
             >
-              🔊
+              {ttsEnabled ? <Volume2 className="size-5" strokeWidth={1.5} /> : <VolumeX className="size-5" strokeWidth={1.5} />}
             </button>
           </div>
         </header>
-        <div className="max-w-sm mx-auto px-4 py-10 flex flex-col gap-6">
-          <h2 className="text-xl font-bold text-center">Quiz Settings</h2>
+        <div className="max-w-sm mx-auto px-4 py-10 flex flex-col gap-6 animate-fade-up">
+          <h2 className="text-2xl font-bold text-center tracking-tight">Quiz settings</h2>
 
           <div className="space-y-2">
             <p className="text-sm font-medium">Direction</p>
@@ -146,7 +147,7 @@ export default function FlashcardsPage() {
                 <button key={im} onClick={() => setInputMode(im)}
                   className={`flex-1 px-3 py-2 transition-colors ${inputMode === im ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
                 >
-                  {im === "multiple-choice" ? "Choice" : im === "type" ? "Type" : "🎤 Speak"}
+                  {im === "multiple-choice" ? "Choice" : im === "type" ? "Type" : <><Mic className="size-3.5 inline -mt-0.5" strokeWidth={1.5} /> Speak</>}
                 </button>
               ))}
             </div>
@@ -169,21 +170,25 @@ export default function FlashcardsPage() {
     const score = computeLessonScore(progress, allWords);
     const nextUnlocked = progress.lessons[lessonNum + 1]?.unlocked;
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-ambient">
         {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
-        <div className="max-w-sm w-full text-center flex flex-col gap-4">
-          <div className="text-5xl">{pct >= 70 ? "🎉" : "📖"}</div>
-          <h2 className="text-2xl font-bold">Lesson {lessonNum} Complete!</h2>
+        <div className="max-w-sm w-full text-center flex flex-col gap-4 animate-fade-up">
+          <div className="flex justify-center">
+            {pct >= 70
+              ? <Trophy className="size-12 text-primary" strokeWidth={1.5} />
+              : <BookOpen className="size-12 text-muted-foreground" strokeWidth={1.5} />
+            }
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight">Lesson {lessonNum} complete</h2>
           <p className="text-muted-foreground">
-            You got <strong>{sessionCorrect}/{sessionTotal}</strong> correct ({pct}%).
+            You got <strong className="tabular-nums">{sessionCorrect}/{sessionTotal}</strong> correct (<span className="tabular-nums">{pct}%</span>).
           </p>
-          <p className="text-sm text-muted-foreground">Overall mastery: <strong>{score}%</strong></p>
+          <p className="text-sm text-muted-foreground">Overall mastery: <strong className="tabular-nums">{score}%</strong></p>
           {nextUnlocked && lessonNum < 10 && (
-            <p className="text-green-600 font-medium text-sm">🔓 Lesson {lessonNum + 1} unlocked!</p>
+            <p className="text-green-600 font-medium text-sm">Lesson {lessonNum + 1} unlocked</p>
           )}
           {!user && (
             <p className="text-xs text-muted-foreground border rounded-lg p-3">
-              💾{" "}
               <button onClick={() => setShowAuth(true)} className="underline hover:text-foreground">
                 Sign up free
               </button>{" "}
@@ -201,10 +206,10 @@ export default function FlashcardsPage() {
 
   // ── Quiz screen ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
+    <div className="min-h-[100dvh] bg-ambient">
+      <header className="border-b backdrop-blur-sm bg-background/80 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button onClick={() => setStarted(false)} className="text-muted-foreground hover:text-foreground text-sm">
+          <button onClick={() => setStarted(false)} className="text-muted-foreground hover:text-foreground text-sm transition-colors">
             ← Back
           </button>
           <div className="flex-1">
@@ -214,9 +219,9 @@ export default function FlashcardsPage() {
           <button
             onClick={toggleTTS}
             title={ttsEnabled ? "Mute pronunciation" : "Unmute pronunciation"}
-            className={`text-lg leading-none transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
+            className={`leading-none transition-opacity duration-200 ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
           >
-            🔊
+            {ttsEnabled ? <Volume2 className="size-5" strokeWidth={1.5} /> : <VolumeX className="size-5" strokeWidth={1.5} />}
           </button>
         </div>
       </header>
@@ -246,8 +251,8 @@ export default function FlashcardsPage() {
               Type answer
             </button>
             <button onClick={() => setInputMode("speak")}
-              className={`px-3 py-1.5 transition-colors ${inputMode === "speak" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>
-              🎤 Speak
+              className={`px-3 py-1.5 transition-colors flex items-center gap-1 ${inputMode === "speak" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>
+              <Mic className="size-3.5" strokeWidth={1.5} /> Speak
             </button>
           </div>
         </div>

@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import QuestionCountPicker from "@/components/QuestionCountPicker";
+import { Volume2, VolumeX, Mic } from "lucide-react";
 
 type Script = "hiragana" | "katakana";
 type QuizMode = "multiple-choice" | "speak";
@@ -144,13 +145,13 @@ export default function KanaQuiz() {
               Multiple choice
             </button>
             <button onClick={() => setQuizMode("speak")}
-              className={`px-3 py-1.5 transition-colors ${quizMode === "speak" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>
-              🎤 Speak
+              className={`px-3 py-1.5 transition-colors flex items-center gap-1 ${quizMode === "speak" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>
+              <Mic className="size-3.5" strokeWidth={1.5} /> Speak
             </button>
           </div>
           <button onClick={toggleTTS} title={ttsEnabled ? "Mute" : "Unmute"}
-            className={`text-lg leading-none ml-auto transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}>
-            🔊
+            className={`leading-none ml-auto transition-opacity duration-200 ${ttsEnabled ? "opacity-100" : "opacity-30"}`}>
+            {ttsEnabled ? <Volume2 className="size-5" strokeWidth={1.5} /> : <VolumeX className="size-5" strokeWidth={1.5} />}
           </button>
         </div>
 
@@ -217,13 +218,13 @@ export default function KanaQuiz() {
             Multiple choice
           </button>
           <button onClick={() => setQuizMode("speak")}
-            className={`px-3 py-1.5 transition-colors ${quizMode === "speak" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>
-            🎤 Speak
+            className={`px-3 py-1.5 transition-colors flex items-center gap-1 ${quizMode === "speak" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}>
+            <Mic className="size-3.5" strokeWidth={1.5} /> Speak
           </button>
         </div>
         <button onClick={toggleTTS} title={ttsEnabled ? "Mute" : "Unmute"}
-          className={`text-lg leading-none ml-auto transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}>
-          🔊
+          className={`leading-none ml-auto transition-opacity duration-200 ${ttsEnabled ? "opacity-100" : "opacity-30"}`}>
+          {ttsEnabled ? <Volume2 className="size-5" strokeWidth={1.5} /> : <VolumeX className="size-5" strokeWidth={1.5} />}
         </button>
       </div>
 
@@ -249,7 +250,7 @@ export default function KanaQuiz() {
           >
             {displayKana}
           </button>
-          {ttsEnabled && <p className="text-xs text-muted-foreground">🔊 tap to hear</p>}
+          {ttsEnabled && <p className="text-xs text-muted-foreground flex items-center justify-center gap-1"><Volume2 className="size-3" strokeWidth={1.5} /> tap to hear</p>}
         </CardContent>
       </Card>
 
@@ -266,13 +267,13 @@ export default function KanaQuiz() {
                 <button
                   onClick={startListening}
                   disabled={recState === "listening"}
-                  className={`w-20 h-20 rounded-full border-4 flex items-center justify-center text-3xl transition-all shadow-md ${
+                  className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all shadow-md ${
                     recState === "listening"
                       ? "border-red-500 bg-red-50 dark:bg-red-950/30 animate-pulse scale-110"
                       : "border-primary bg-background hover:bg-primary/5 active:scale-95"
                   }`}
                 >
-                  🎤
+                  <Mic className="size-8" strokeWidth={1.5} />
                 </button>
                 <p className="text-sm text-muted-foreground">
                   {recState === "listening" ? "Listening…" : "Tap to speak"}
@@ -306,8 +307,8 @@ export default function KanaQuiz() {
             </p>
             <div className="flex items-center justify-center gap-2 mb-3">
               <button onClick={() => speak(currentCard.hiragana)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium hover:bg-muted transition-colors">
-                🔊 Listen
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium hover:bg-muted active:scale-[0.97] transition-press">
+                <Volume2 className="size-4" strokeWidth={1.5} /> Listen
               </button>
             </div>
             <Button onClick={handleNext} variant={correct ? "default" : "outline"}>Next →</Button>

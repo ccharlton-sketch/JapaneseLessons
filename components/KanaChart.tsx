@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { speak } from "@/lib/speech";
 import { useTTSPreference } from "@/lib/useTTSPreference";
+import { Volume2, VolumeX } from "lucide-react";
 
 const HIRAGANA: [string, string][] = [
   ["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"],
@@ -53,9 +54,9 @@ export default function KanaChart() {
         <button
           onClick={toggleTTS}
           title={ttsEnabled ? "Mute pronunciation" : "Unmute pronunciation"}
-          className={`ml-auto text-lg leading-none transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
+          className={`ml-auto leading-none transition-opacity duration-200 ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
         >
-          🔊
+          {ttsEnabled ? <Volume2 className="size-5" strokeWidth={1.5} /> : <VolumeX className="size-5" strokeWidth={1.5} />}
         </button>
       </div>
       {ttsEnabled && (

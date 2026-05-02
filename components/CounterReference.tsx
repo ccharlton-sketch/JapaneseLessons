@@ -3,6 +3,7 @@ import { useState } from "react";
 import { getCardsByGroup, COUNTER_GROUPS } from "@/data/counters";
 import { speak } from "@/lib/speech";
 import { useTTSPreference } from "@/lib/useTTSPreference";
+import { Volume2, VolumeX } from "lucide-react";
 
 // Group cards by their counter suffix for display
 function groupByCounter(cards: ReturnType<typeof getCardsByGroup>) {
@@ -42,9 +43,9 @@ export default function CounterReference({ group }: Props) {
         <button
           onClick={toggleTTS}
           title={ttsEnabled ? "Mute pronunciation" : "Unmute pronunciation"}
-          className={`text-lg leading-none ml-auto transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
+          className={`leading-none ml-auto transition-opacity duration-200 ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
         >
-          🔊
+          {ttsEnabled ? <Volume2 className="size-5" strokeWidth={1.5} /> : <VolumeX className="size-5" strokeWidth={1.5} />}
         </button>
       </div>
       {ttsEnabled && (

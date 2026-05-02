@@ -3,6 +3,7 @@ import { useState } from "react";
 import { COUNTER_GROUPS, getCardsByGroup } from "@/data/counters";
 import { speak } from "@/lib/speech";
 import { useTTSPreference } from "@/lib/useTTSPreference";
+import { Volume2, VolumeX } from "lucide-react";
 
 function groupByCounter(cards: ReturnType<typeof getCardsByGroup>) {
   const map = new Map<string, { usedFor: string; cards: typeof cards }>();
@@ -39,9 +40,9 @@ export default function CounterStudyAll() {
         <button
           onClick={toggleTTS}
           title={ttsEnabled ? "Mute pronunciation" : "Unmute pronunciation"}
-          className={`text-lg leading-none ml-auto transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
+          className={`leading-none ml-auto transition-opacity duration-200 ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
         >
-          🔊
+          {ttsEnabled ? <Volume2 className="size-5" strokeWidth={1.5} /> : <VolumeX className="size-5" strokeWidth={1.5} />}
         </button>
       </div>
 
@@ -63,7 +64,7 @@ export default function CounterStudyAll() {
               activeGroup === g.id ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"
             }`}
           >
-            {g.emoji} {g.title}
+            {g.title}
           </button>
         ))}
       </div>

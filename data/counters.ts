@@ -203,15 +203,15 @@ export interface CounterGroup {
   id: number;
   title: string;
   subtitle: string;
-  emoji: string;
+  icon: "box" | "paw-print" | "clock" | "utensils" | "building";
 }
 
 export const COUNTER_GROUPS: CounterGroup[] = [
-  { id: 1, title: "Objects & Shape", subtitle: "General, flat, long, books", emoji: "📦" },
-  { id: 2, title: "People & Animals", subtitle: "Humans, small/large animals, birds", emoji: "🐾" },
-  { id: 3, title: "Time", subtitle: "Minutes, hours, days, weeks, months", emoji: "⏱️" },
-  { id: 4, title: "Food & Drink", subtitle: "Cups, round objects, slices", emoji: "🍜" },
-  { id: 5, title: "Buildings & Machines", subtitle: "Vehicles, buildings, floors, times", emoji: "🏢" },
+  { id: 1, title: "Objects & Shape", subtitle: "General, flat, long, books", icon: "box" },
+  { id: 2, title: "People & Animals", subtitle: "Humans, small/large animals, birds", icon: "paw-print" },
+  { id: 3, title: "Time", subtitle: "Minutes, hours, days, weeks, months", icon: "clock" },
+  { id: 4, title: "Food & Drink", subtitle: "Cups, round objects, slices", icon: "utensils" },
+  { id: 5, title: "Buildings & Machines", subtitle: "Vehicles, buildings, floors, times", icon: "building" },
 ];
 
 export function getCardsByGroup(group: number): CounterQuizCard[] {

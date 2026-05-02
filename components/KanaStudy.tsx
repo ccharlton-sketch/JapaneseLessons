@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { speak } from "@/lib/speech";
 import { useTTSPreference } from "@/lib/useTTSPreference";
+import { Volume2, VolumeX } from "lucide-react";
 
 interface KanaCell {
   hiragana: string;
@@ -254,9 +255,9 @@ export default function KanaStudy() {
         <button
           onClick={toggleTTS}
           title={ttsEnabled ? "Mute pronunciation" : "Unmute pronunciation"}
-          className={`text-lg leading-none ml-auto transition-opacity ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
+          className={`leading-none ml-auto transition-opacity duration-200 ${ttsEnabled ? "opacity-100" : "opacity-30"}`}
         >
-          🔊
+          {ttsEnabled ? <Volume2 className="size-5" strokeWidth={1.5} /> : <VolumeX className="size-5" strokeWidth={1.5} />}
         </button>
       </div>
 
@@ -267,7 +268,7 @@ export default function KanaStudy() {
       {/* Sections */}
       {SECTIONS.map((section) => (
         <div key={section.title}>
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+          <h3 className="text-sm font-bold text-muted-foreground mb-3 tracking-wide">
             {section.title}
           </h3>
           <div className="space-y-2">
@@ -284,9 +285,9 @@ export default function KanaStudy() {
                       <button
                         key={ci}
                         onClick={() => handleClick(cell)}
-                        className={`flex-1 rounded-lg border bg-card py-2 px-1 text-center transition-all ${
+                        className={`flex-1 rounded-lg border bg-card py-2 px-1 text-center ${
                           ttsEnabled
-                            ? "hover:border-primary hover:bg-primary/5 active:scale-95 cursor-pointer"
+                            ? "hover:border-primary/50 hover:bg-primary/5 hover-lift active:scale-[0.97] cursor-pointer"
                             : "cursor-default"
                         }`}
                         title={cell.romaji}
