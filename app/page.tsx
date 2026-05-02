@@ -7,11 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import KanaChart from "@/components/KanaChart";
 import KanaStudy from "@/components/KanaStudy";
 import KanaQuiz from "@/components/KanaQuiz";
+import KanjiStudy from "@/components/KanjiStudy";
+import KanjiQuiz from "@/components/KanjiQuiz";
 import CounterGroupMap from "@/components/CounterGroupMap";
 import CounterStudyAll from "@/components/CounterStudyAll";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/lib/useAuth";
-import { BookOpen, Hash, Languages, FolderOpen, BookText, LayoutGrid, Sparkles } from "lucide-react";
+import { BookOpen, Hash, Languages, FolderOpen, BookText, LayoutGrid, Sparkles, Pen } from "lucide-react";
 
 export default function Home() {
   const [progress, setProgress] = useState<AppProgress | null>(null);
@@ -132,6 +134,7 @@ export default function Home() {
             <TabsTrigger value="lessons" className="flex-1 gap-1.5"><BookOpen className="size-4" strokeWidth={1.5} /> Lessons</TabsTrigger>
             <TabsTrigger value="counters" className="flex-1 gap-1.5"><Hash className="size-4" strokeWidth={1.5} /> Counters</TabsTrigger>
             <TabsTrigger value="kana" className="flex-1 gap-1.5"><Languages className="size-4" strokeWidth={1.5} /> Kana</TabsTrigger>
+            <TabsTrigger value="kanji" className="flex-1 gap-1.5"><Pen className="size-4" strokeWidth={1.5} /> Kanji</TabsTrigger>
           </TabsList>
 
           <TabsContent value="lessons">
@@ -213,6 +216,35 @@ export default function Home() {
                   </p>
                 </div>
                 <KanaChart />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          <TabsContent value="kanji">
+            <Tabs defaultValue="study">
+              <TabsList className="mb-4 w-full">
+                <TabsTrigger value="study" className="flex-1 gap-1.5"><BookText className="size-4" strokeWidth={1.5} /> Study</TabsTrigger>
+                <TabsTrigger value="quiz" className="flex-1 gap-1.5"><Sparkles className="size-4" strokeWidth={1.5} /> Quiz</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="study">
+                <div className="mb-5">
+                  <h2 className="text-xl font-bold tracking-tight">Kanji characters</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    145 essential kanji across 5 levels. Click any character to see readings and examples.
+                  </p>
+                </div>
+                <KanjiStudy />
+              </TabsContent>
+
+              <TabsContent value="quiz">
+                <div className="mb-5">
+                  <h2 className="text-xl font-bold tracking-tight">Kanji quiz</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Test your kanji knowledge — identify meanings or readings.
+                  </p>
+                </div>
+                <KanjiQuiz />
               </TabsContent>
             </Tabs>
           </TabsContent>

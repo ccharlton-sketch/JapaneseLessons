@@ -114,6 +114,11 @@ export default function FlashCard({ word, mode, inputMode, choices, ttsEnabled, 
               } ${mode === "jp-to-en" ? "text-6xl font-japanese block w-full" : "text-3xl block w-full"}`}
             >
               {prompt}
+              {mode === "jp-to-en" && word.kanji && (
+                <span className="block text-base font-medium text-muted-foreground mt-1 font-japanese">
+                  ({word.kanji})
+                </span>
+              )}
               {ttsEnabled && (
                 <span className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-3 font-normal normal-case tracking-normal">
                   <Volume2 className="size-3" strokeWidth={1.5} /> tap to hear
