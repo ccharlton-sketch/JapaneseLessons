@@ -71,17 +71,17 @@ export default function KanjiStudy() {
       </div>
 
       {/* Kanji grid */}
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5">
         {cards.map((card) => {
           const isExpanded = expandedId === card.id;
           return (
             <button
               key={card.id}
               onClick={() => handleCardClick(card)}
-              className={`relative flex flex-col items-center justify-center rounded-xl border p-3 font-japanese transition-all hover-lift active:scale-[0.97] ${
+              className={`relative flex flex-col items-center justify-center rounded-2xl border p-3 font-japanese transition-all hover-lift active:scale-[0.96] ${
                 isExpanded
-                  ? "col-span-2 row-span-2 bg-primary/5 border-primary/50 card-elevated-hover"
-                  : "bg-card card-elevated hover:card-elevated-hover hover:border-primary/50"
+                  ? "col-span-2 row-span-2 bg-primary/5 border-primary/40 card-elevated-hover"
+                  : "bg-card card-elevated hover:card-elevated-hover hover:border-primary/40"
               }`}
             >
               <span className={`font-bold ${isExpanded ? "text-4xl" : "text-2xl"}`}>

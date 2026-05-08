@@ -8,7 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import QuestionCountPicker from "@/components/QuestionCountPicker";
-import { Volume2, VolumeX, Mic } from "lucide-react";
+import { Volume2, VolumeX, Mic, Trophy, BookOpen } from "lucide-react";
+import { useGamificationCtx } from "@/components/GamificationProvider";
+import StatsBar from "@/components/StatsBar";
 
 type Script = "hiragana" | "katakana";
 type QuizMode = "multiple-choice" | "speak";
@@ -49,6 +51,7 @@ export default function KanaQuiz() {
   const [quizMode, setQuizMode] = useState<QuizMode>("multiple-choice");
   const [sections, setSections] = useState<Set<Section>>(new Set(["basic"]));
   const [started, setStarted] = useState(false);
+  const { recordAnswer: recordGamAnswer, completeQuiz, state: gamState } = useGamificationCtx();
 
   const currentPool = poolForSections(sections);
   const maxQuestions = currentPool.length;
@@ -104,18 +107,25 @@ export default function KanaQuiz() {
   const handleSubmit = useCallback((isCorrect: boolean) => {
     setCorrect(isCorrect);
     setSubmitted(true);
+    recordGamAnswer(isCorrect);
     if (ttsEnabled) speak(currentCard.hiragana);
-  }, [currentCard, ttsEnabled]);
+  }, [currentCard, ttsEnabled, recordGamAnswer]);
 
   const handleNext = useCallback(() => {
-    setSessionCorrect((c) => c + (correct ? 1 : 0));
-    setSessionTotal((t) => t + 1);
+    const newCorrect = sessionCorrect + (correct ? 1 : 0);
+    const newTotal = sessionTotal + 1;
+    setSessionCorrect(newCorrect);
+    setSessionTotal(newTotal);
     setSubmitted(false);
     setCorrect(false);
     resetRec();
-    if (index + 1 >= cards.length) setDone(true);
-    else setIndex((i) => i + 1);
-  }, [correct, index, cards.length, resetRec]);
+    if (index + 1 >= cards.length) {
+      completeQuiz(newCorrect, newTotal);
+      setDone(true);
+    } else {
+      setIndex((i) => i + 1);
+    }
+  }, [correct, index, cards.length, resetRec, sessionCorrect, sessionTotal, completeQuiz]);
 
   useEffect(() => {
     if (quizMode === "speak" && recState === "done" && transcript && !submitted && currentCard) {
@@ -185,14 +195,22 @@ export default function KanaQuiz() {
   if (done) {
     const pct = Math.round((sessionCorrect / sessionTotal) * 100);
     return (
-      <div className="text-center flex flex-col gap-4 py-8">
-        <div className="text-5xl">{pct >= 70 ? "🎉" : "📖"}</div>
-        <h2 className="text-2xl font-bold">Quiz Complete!</h2>
+      <div className="max-w-sm mx-auto text-center flex flex-col gap-4 py-8 animate-fade-up">
+        <div className="flex justify-center">
+          {pct >= 70
+            ? <Trophy className="size-12 text-primary" strokeWidth={1.5} />
+            : <BookOpen className="size-12 text-muted-foreground" strokeWidth={1.5} />
+          }
+        </div>
+        <h2 className="text-2xl font-bold tracking-tight">Kana quiz complete</h2>
         <p className="text-muted-foreground">
-          You got <strong>{sessionCorrect}/{sessionTotal}</strong> correct ({pct}%).
+          You got <strong className="tabular-nums">{sessionCorrect}/{sessionTotal}</strong> correct (<span className="tabular-nums">{pct}%</span>).
         </p>
-        <Button onClick={startQuiz}>Practice Again</Button>
-        <Button variant="outline" onClick={() => setStarted(false)}>Change Settings</Button>
+        <StatsBar state={gamState} />
+        <div className="flex flex-col gap-2 mt-2">
+          <Button onClick={startQuiz}>Practice Again</Button>
+          <Button variant="outline" onClick={() => setStarted(false)}>Change Settings</Button>
+        </div>
       </div>
     );
   }
@@ -228,6 +246,9 @@ export default function KanaQuiz() {
         </button>
       </div>
 
+      {/* Gamification stats */}
+      <StatsBar state={gamState} compact />
+
       {/* Progress */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
@@ -237,8 +258,9 @@ export default function KanaQuiz() {
       </div>
 
       {/* Card */}
-      <Card className="text-center shadow-lg">
-        <CardContent className="pt-8 pb-6">
+      <Card className="text-center card-elevated rounded-2xl overflow-hidden">
+        <CardContent className="pt-10 pb-8 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
           <div className="text-xs uppercase tracking-widest text-muted-foreground mb-4">
             {quizMode === "speak" ? "Pronounce this character" : "What sound does this make?"}
           </div>
@@ -282,19 +304,19 @@ export default function KanaQuiz() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {choices.map((c) => (
+          <div className="grid grid-cols-2 gap-3">
+            {choices.map((c, i) => (
               <button key={c} onClick={() => handleSubmit(c === currentCard.romaji)}
-                className="rounded-xl border-2 border-border py-3 px-4 text-lg font-medium hover:border-primary hover:bg-primary/5 transition-colors text-center">
+                className={`animate-fade-up stagger-${Math.min(i + 1, 10)} rounded-2xl border bg-card py-4 px-4 text-lg font-medium card-elevated hover:card-elevated-hover hover:border-primary/40 hover-lift active:scale-[0.96] transition-all text-center`}>
                 {c}
               </button>
             ))}
           </div>
         )
       ) : (
-        <Card className={`text-center border-2 ${correct ? "border-green-500 bg-green-50 dark:bg-green-950/30" : "border-red-400 bg-red-50 dark:bg-red-950/30"}`}>
-          <CardContent className="py-4">
-            <div className="text-2xl mb-2">{correct ? "✓ Correct!" : "✗ Incorrect"}</div>
+        <Card className={`text-center rounded-2xl border ${correct ? "border-green-500/40 bg-gradient-to-b from-green-50 to-card dark:from-green-950/30 dark:to-card" : "border-red-400/40 bg-gradient-to-b from-red-50 to-card dark:from-red-950/30 dark:to-card"}`}>
+          <CardContent className="py-5">
+            <div className={`text-xl font-bold mb-2 ${correct ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>{correct ? "Correct" : "Incorrect"}</div>
             {quizMode === "speak" && transcript && (
               <p className="text-xs text-muted-foreground mb-1">
                 You said: <span className="font-japanese">{transcript.split("|")[0]}</span>

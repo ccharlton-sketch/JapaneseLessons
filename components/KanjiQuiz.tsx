@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import QuestionCountPicker from "@/components/QuestionCountPicker";
 import { Volume2, VolumeX, Trophy, BookOpen } from "lucide-react";
+import { useGamificationCtx } from "@/components/GamificationProvider";
+import StatsBar from "@/components/StatsBar";
 
 type QuizMode = "meaning" | "reading";
 
@@ -33,6 +35,7 @@ function buildChoices(card: KanjiCard, mode: QuizMode): string[] {
 
 export default function KanjiQuiz() {
   const { enabled: ttsEnabled, toggle: toggleTTS } = useTTSPreference();
+  const { recordAnswer: recordGamAnswer, completeQuiz, state: gamState } = useGamificationCtx();
 
   // Config state
   const [activeLevel, setActiveLevel] = useState<1 | 2 | 3 | 4 | 5 | "all">("all");
@@ -75,18 +78,25 @@ export default function KanjiQuiz() {
     setCorrect(isCorrect);
     setChosenAnswer(chosen);
     setSubmitted(true);
+    recordGamAnswer(isCorrect);
     if (ttsEnabled) speak(currentCard.kunyomi[0]?.replace(/[()（）]/g, "") || currentCard.onyomi[0] || currentCard.kanji);
-  }, [currentCard, quizMode, ttsEnabled]);
+  }, [currentCard, quizMode, ttsEnabled, recordGamAnswer]);
 
   const handleNext = useCallback(() => {
-    setSessionCorrect((c) => c + (correct ? 1 : 0));
-    setSessionTotal((t) => t + 1);
+    const newCorrect = sessionCorrect + (correct ? 1 : 0);
+    const newTotal = sessionTotal + 1;
+    setSessionCorrect(newCorrect);
+    setSessionTotal(newTotal);
     setSubmitted(false);
     setCorrect(false);
     setChosenAnswer("");
-    if (index + 1 >= cards.length) setDone(true);
-    else setIndex((i) => i + 1);
-  }, [correct, index, cards.length]);
+    if (index + 1 >= cards.length) {
+      completeQuiz(newCorrect, newTotal);
+      setDone(true);
+    } else {
+      setIndex((i) => i + 1);
+    }
+  }, [correct, index, cards.length, sessionCorrect, sessionTotal, completeQuiz]);
 
   // ── Setup screen ──────────────────────────────────────────────────────────
   if (!started) {
@@ -156,6 +166,7 @@ export default function KanjiQuiz() {
         <p className="text-muted-foreground">
           You got <strong className="tabular-nums">{sessionCorrect}/{sessionTotal}</strong> correct (<span className="tabular-nums">{pct}%</span>).
         </p>
+        <StatsBar state={gamState} />
         <div className="flex flex-col gap-2 mt-2">
           <Button onClick={startQuiz}>Practice Again</Button>
           <Button variant="outline" onClick={() => setStarted(false)}>Change Settings</Button>
@@ -171,6 +182,9 @@ export default function KanjiQuiz() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Gamification stats */}
+      <StatsBar state={gamState} compact />
+
       {/* Progress bar */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
@@ -184,9 +198,9 @@ export default function KanjiQuiz() {
       </div>
 
       {/* Question card */}
-      <Card className="text-center card-elevated overflow-hidden animate-fade-in">
-        <CardContent className="pt-8 pb-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent pointer-events-none" />
+      <Card className="text-center card-elevated overflow-hidden animate-fade-in rounded-2xl">
+        <CardContent className="pt-10 pb-8 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
           <div className="relative">
             <div className="text-xs font-medium text-muted-foreground mb-4 tracking-wide">
               {quizMode === "meaning" ? "What does this kanji mean?" : "How do you read this kanji?"}
@@ -215,7 +229,7 @@ export default function KanjiQuiz() {
             <button
               key={c}
               onClick={() => handleSubmit(c)}
-              className={`animate-fade-up stagger-${Math.min(i + 1, 10)} rounded-xl border bg-card py-3.5 px-4 text-sm font-medium card-elevated hover:card-elevated-hover hover:border-primary/50 hover-lift active:scale-[0.97] text-center ${
+              className={`animate-fade-up stagger-${Math.min(i + 1, 10)} rounded-2xl border bg-card py-4 px-4 text-sm font-medium card-elevated hover:card-elevated-hover hover:border-primary/40 hover-lift active:scale-[0.96] transition-all text-center ${
                 quizMode === "reading" ? "font-japanese text-lg" : ""
               }`}
             >
@@ -224,9 +238,9 @@ export default function KanjiQuiz() {
           ))}
         </div>
       ) : (
-        <Card className={`animate-fade-up text-center border ${correct ? "border-green-500/50 bg-green-50/80 dark:bg-green-950/30" : "border-red-400/50 bg-red-50/80 dark:bg-red-950/30"}`}>
-          <CardContent className="py-4">
-            <div className="text-2xl mb-2">{correct ? "Correct!" : "Incorrect"}</div>
+        <Card className={`animate-fade-up text-center rounded-2xl border ${correct ? "border-green-500/40 bg-gradient-to-b from-green-50 to-card dark:from-green-950/30 dark:to-card" : "border-red-400/40 bg-gradient-to-b from-red-50 to-card dark:from-red-950/30 dark:to-card"}`}>
+          <CardContent className="py-5">
+            <div className={`text-xl font-bold mb-2 ${correct ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>{correct ? "Correct" : "Incorrect"}</div>
             {!correct && (
               <div className="text-sm text-muted-foreground mb-2">
                 Correct answer: <span className={`font-semibold ${quizMode === "reading" ? "font-japanese text-base" : ""}`}>{correctAnswer}</span>

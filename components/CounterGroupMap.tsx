@@ -1,6 +1,6 @@
 "use client";
 import { COUNTER_GROUPS, getCardsByGroup, CounterGroup } from "@/data/counters";
-import { Box, PawPrint, Clock, Utensils, Building } from "lucide-react";
+import { Box, PawPrint, Clock, Utensils, Building, ChevronRight } from "lucide-react";
 
 const ICON_MAP: Record<CounterGroup["icon"], typeof Box> = {
   "box": Box,
@@ -16,7 +16,7 @@ interface Props {
 
 export default function CounterGroupMap({ onSelect }: Props) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-3 sm:grid-cols-2">
       {COUNTER_GROUPS.map((g, i) => {
         const count = getCardsByGroup(g.id).length;
         const Icon = ICON_MAP[g.icon];
@@ -24,22 +24,21 @@ export default function CounterGroupMap({ onSelect }: Props) {
           <button
             key={g.id}
             onClick={() => onSelect(g.id)}
-            className={`animate-fade-up stagger-${Math.min(i + 1, 10)} group rounded-2xl border bg-card p-5 text-left card-elevated hover:card-elevated-hover hover:border-primary/50 hover-lift active:scale-[0.97]`}
+            className={`animate-fade-up stagger-${Math.min(i + 1, 10)} group rounded-2xl border bg-card p-5 text-left card-elevated hover:card-elevated-hover hover:border-primary/40 hover-lift active:scale-[0.97] transition-all`}
           >
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Icon className="size-5 text-primary" strokeWidth={1.5} />
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    Group {g.id}
-                  </span>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Icon className="size-4.5 text-primary" strokeWidth={1.5} />
                 </div>
-                <div className="font-bold text-base">{g.title}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{g.subtitle}</div>
+                <div className="min-w-0">
+                  <div className="font-bold text-[15px] leading-tight">{g.title}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{g.subtitle}</div>
+                </div>
               </div>
-              <div className="text-right shrink-0">
-                <div className="text-sm font-bold text-primary tabular-nums">{count}</div>
-                <div className="text-xs text-muted-foreground">cards</div>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-sm font-bold text-primary tabular-nums">{count}</span>
+                <ChevronRight className="size-4 text-muted-foreground opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" strokeWidth={1.5} />
               </div>
             </div>
           </button>

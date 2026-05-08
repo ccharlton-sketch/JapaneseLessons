@@ -18,6 +18,8 @@ import QuestionCountPicker from "@/components/QuestionCountPicker";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Volume2, VolumeX, Trophy, BookOpen, Mic } from "lucide-react";
+import { useGamificationCtx } from "@/components/GamificationProvider";
+import StatsBar from "@/components/StatsBar";
 
 type Mode = "jp-to-en" | "en-to-jp";
 type InputMode = "type" | "multiple-choice" | "speak";
@@ -46,6 +48,7 @@ export default function FlashcardsPage() {
   const { enabled: ttsEnabled, toggle: toggleTTS } = useTTSPreference();
   const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
+  const { recordAnswer: recordGamAnswer, completeQuiz, state: gamState } = useGamificationCtx();
 
   const fullPool = getWordsByLesson(lessonNum);
   const maxQuestions = fullPool.length;
@@ -82,6 +85,9 @@ export default function FlashcardsPage() {
 
   const handleResult = useCallback(
     (correct: boolean) => {
+      // Record gamification
+      recordGamAnswer(correct);
+
       const newProgress = recordAnswer(progress, currentWord.id, correct);
       const score = computeLessonScore(newProgress, allWords);
       const finalProgress = maybeUnlockNext(newProgress, lessonNum, score);
@@ -90,10 +96,18 @@ export default function FlashcardsPage() {
       setProgress(finalProgress);
       setSessionCorrect((c) => c + (correct ? 1 : 0));
       setSessionTotal((t) => t + 1);
-      if (index + 1 >= allWords.length) setDone(true);
-      else setIndex((i) => i + 1);
+
+      if (index + 1 >= allWords.length) {
+        // Quiz complete — award bonus XP
+        const finalCorrect = sessionCorrect + (correct ? 1 : 0);
+        const finalTotal = sessionTotal + 1;
+        completeQuiz(finalCorrect, finalTotal);
+        setDone(true);
+      } else {
+        setIndex((i) => i + 1);
+      }
     },
-    [progress, currentWord, allWords, lessonNum, index, user]
+    [progress, currentWord, allWords, lessonNum, index, user, recordGamAnswer, completeQuiz, sessionCorrect, sessionTotal]
   );
 
   if (!maxQuestions) {
@@ -108,8 +122,8 @@ export default function FlashcardsPage() {
   if (!started) {
     return (
       <div className="min-h-[100dvh] bg-ambient">
-        <header className="border-b backdrop-blur-sm bg-background/80 sticky top-0 z-40">
-          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+        <header className="glass-header sticky top-0 z-40">
+          <div className="max-w-3xl mx-auto px-5 py-3 flex items-center gap-3">
             <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground text-sm transition-colors">
               ← Back
             </button>
@@ -184,6 +198,7 @@ export default function FlashcardsPage() {
             You got <strong className="tabular-nums">{sessionCorrect}/{sessionTotal}</strong> correct (<span className="tabular-nums">{pct}%</span>).
           </p>
           <p className="text-sm text-muted-foreground">Overall mastery: <strong className="tabular-nums">{score}%</strong></p>
+          <StatsBar state={gamState} />
           {nextUnlocked && lessonNum < 10 && (
             <p className="text-green-600 font-medium text-sm">Lesson {lessonNum + 1} unlocked</p>
           )}
@@ -207,8 +222,8 @@ export default function FlashcardsPage() {
   // ── Quiz screen ───────────────────────────────────────────────────────────
   return (
     <div className="min-h-[100dvh] bg-ambient">
-      <header className="border-b backdrop-blur-sm bg-background/80 sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+      <header className="glass-header sticky top-0 z-40">
+        <div className="max-w-3xl mx-auto px-5 py-3 flex items-center gap-3">
           <button onClick={() => setStarted(false)} className="text-muted-foreground hover:text-foreground text-sm transition-colors">
             ← Back
           </button>
@@ -226,7 +241,12 @@ export default function FlashcardsPage() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      <div className="max-w-3xl mx-auto px-5 py-4">
+        {/* Gamification stats */}
+        <div className="mb-4">
+          <StatsBar state={gamState} compact />
+        </div>
+
         {/* Mode controls (can still change mid-quiz) */}
         <div className="flex flex-wrap gap-2 mb-6 justify-center">
           {inputMode !== "speak" && (

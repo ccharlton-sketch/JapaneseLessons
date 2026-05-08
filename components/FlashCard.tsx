@@ -100,9 +100,9 @@ export default function FlashCard({ word, mode, inputMode, choices, ttsEnabled, 
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-lg mx-auto animate-fade-in">
-      <Card className="text-center card-elevated overflow-hidden">
-        <CardContent className="pt-8 pb-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent pointer-events-none" />
+      <Card className="text-center card-elevated overflow-hidden rounded-2xl">
+        <CardContent className="pt-10 pb-8 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
           <div className="relative">
             <div className="text-xs font-medium text-muted-foreground mb-4 tracking-wide">{promptLabel}</div>
 
@@ -186,7 +186,7 @@ export default function FlashCard({ word, mode, inputMode, choices, ttsEnabled, 
               <button
                 key={c}
                 onClick={() => handleSubmit(c)}
-                className={`animate-fade-up stagger-${i + 1} rounded-xl border bg-card py-3.5 px-4 text-sm font-medium card-elevated hover:card-elevated-hover hover:border-primary/50 hover-lift active:scale-[0.97] text-left ${
+                className={`animate-fade-up stagger-${Math.min(i + 1, 10)} rounded-2xl border bg-card py-4 px-4 text-sm font-medium card-elevated hover:card-elevated-hover hover:border-primary/40 hover-lift active:scale-[0.96] transition-all text-left ${
                   mode === "en-to-jp" ? "font-japanese text-center text-lg" : ""
                 }`}
               >
@@ -227,12 +227,12 @@ export default function FlashCard({ word, mode, inputMode, choices, ttsEnabled, 
         )
       ) : (
         <Card
-          className={`animate-fade-up text-center border ${
-            correct ? "border-green-500/50 bg-green-50/80 dark:bg-green-950/30" : "border-red-400/50 bg-red-50/80 dark:bg-red-950/30"
+          className={`animate-fade-up text-center rounded-2xl border ${
+            correct ? "border-green-500/40 bg-gradient-to-b from-green-50 to-card dark:from-green-950/30 dark:to-card" : "border-red-400/40 bg-gradient-to-b from-red-50 to-card dark:from-red-950/30 dark:to-card"
           }`}
         >
-          <CardContent className="py-4">
-            <div className="text-2xl mb-1">{correct ? "✓ Correct!" : "✗ Incorrect"}</div>
+          <CardContent className="py-5">
+            <div className={`text-xl font-bold mb-1.5 ${correct ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>{correct ? "Correct" : "Incorrect"}</div>
             {inputMode === "speak" && transcript && (
               <p className="text-xs text-muted-foreground mb-2">
                 You said: <span className="font-japanese">{transcript.split("|")[0]}</span>

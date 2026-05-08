@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import QuestionCountPicker from "@/components/QuestionCountPicker";
 import { Volume2, VolumeX, Trophy, BookOpen, Box, PawPrint, Clock, Utensils, Building } from "lucide-react";
+import { useGamificationCtx } from "@/components/GamificationProvider";
+import StatsBar from "@/components/StatsBar";
 import { CounterGroup } from "@/data/counters";
 
 const ICON_MAP: Record<CounterGroup["icon"], typeof Box> = {
@@ -43,6 +45,7 @@ export default function CounterGroupPage() {
   const router = useRouter();
   const groupMeta = COUNTER_GROUPS.find((g) => g.id === groupNum);
   const { enabled: ttsEnabled, toggle: toggleTTS } = useTTSPreference();
+  const { recordAnswer: recordGamAnswer, completeQuiz, state: gamState } = useGamificationCtx();
 
   const fullPool = getCardsByGroup(groupNum);
   const maxQuestions = fullPool.length;
@@ -80,24 +83,31 @@ export default function CounterGroupPage() {
     const isCorrect = currentCard.allAnswers.includes(chosen);
     setCorrect(isCorrect);
     setSubmitted(true);
+    recordGamAnswer(isCorrect);
     if (ttsEnabled) speak(currentCard.reading);
-  }, [currentCard, ttsEnabled]);
+  }, [currentCard, ttsEnabled, recordGamAnswer]);
 
   const handleNext = useCallback(() => {
-    setSessionCorrect((c) => c + (correct ? 1 : 0));
-    setSessionTotal((t) => t + 1);
+    const newCorrect = sessionCorrect + (correct ? 1 : 0);
+    const newTotal = sessionTotal + 1;
+    setSessionCorrect(newCorrect);
+    setSessionTotal(newTotal);
     setSubmitted(false);
     setCorrect(false);
     setShowHint(false);
-    if (index + 1 >= cards.length) setDone(true);
-    else setIndex((i) => i + 1);
-  }, [correct, index, cards.length]);
+    if (index + 1 >= cards.length) {
+      completeQuiz(newCorrect, newTotal);
+      setDone(true);
+    } else {
+      setIndex((i) => i + 1);
+    }
+  }, [correct, index, cards.length, sessionCorrect, sessionTotal, completeQuiz]);
 
   const GroupIcon = groupMeta ? ICON_MAP[groupMeta.icon] : null;
 
   const header = (backFn: () => void) => (
-    <header className="border-b backdrop-blur-sm bg-background/80 sticky top-0 z-40">
-      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+    <header className="glass-header sticky top-0 z-40">
+      <div className="max-w-3xl mx-auto px-5 py-3 flex items-center gap-3">
         <button onClick={backFn} className="text-muted-foreground hover:text-foreground text-sm transition-colors">
           ← Back
         </button>
@@ -148,6 +158,7 @@ export default function CounterGroupPage() {
           <p className="text-muted-foreground">
             You got <strong>{sessionCorrect}/{sessionTotal}</strong> correct ({pct}%).
           </p>
+          <StatsBar state={gamState} />
           <Button onClick={startQuiz}>Practice Again</Button>
           <Button variant="outline" onClick={() => setStarted(false)}>Change Settings</Button>
         </div>
@@ -159,7 +170,8 @@ export default function CounterGroupPage() {
   return (
     <div className="min-h-[100dvh] bg-ambient">
       {header(() => setStarted(false))}
-      <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-4">
+      <div className="max-w-3xl mx-auto px-5 py-4 flex flex-col gap-4">
+        <StatsBar state={gamState} compact />
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <Progress value={(index / cards.length) * 100} className="h-2" />
@@ -167,9 +179,9 @@ export default function CounterGroupPage() {
           <span className="text-sm text-muted-foreground whitespace-nowrap tabular-nums">{index + 1} / {cards.length}</span>
         </div>
 
-        <Card className="text-center card-elevated overflow-hidden animate-fade-in">
-          <CardContent className="pt-8 pb-6 relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent pointer-events-none" />
+        <Card className="text-center card-elevated overflow-hidden animate-fade-in rounded-2xl">
+          <CardContent className="pt-10 pb-8 relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
             <div className="relative">
               <div className="text-xs font-medium text-muted-foreground mb-4 tracking-wide">
                 How do you say this in Japanese?
@@ -209,15 +221,15 @@ export default function CounterGroupPage() {
           <div className="grid grid-cols-2 gap-3">
             {choices.map((c, i) => (
               <button key={c} onClick={() => handleSubmit(c)}
-                className={`animate-fade-up stagger-${i + 1} rounded-xl border bg-card py-3.5 px-4 font-japanese text-lg font-medium card-elevated hover:card-elevated-hover hover:border-primary/50 hover-lift active:scale-[0.97] text-center`}>
+                className={`animate-fade-up stagger-${Math.min(i + 1, 10)} rounded-2xl border bg-card py-4 px-4 font-japanese text-lg font-medium card-elevated hover:card-elevated-hover hover:border-primary/40 hover-lift active:scale-[0.96] transition-all text-center`}>
                 {c}
               </button>
             ))}
           </div>
         ) : (
-          <Card className={`animate-fade-up text-center border ${correct ? "border-green-500/50 bg-green-50/80 dark:bg-green-950/30" : "border-red-400/50 bg-red-50/80 dark:bg-red-950/30"}`}>
-            <CardContent className="py-4">
-              <div className="text-2xl mb-2">{correct ? "✓ Correct!" : "✗ Incorrect"}</div>
+          <Card className={`animate-fade-up text-center rounded-2xl border ${correct ? "border-green-500/40 bg-gradient-to-b from-green-50 to-card dark:from-green-950/30 dark:to-card" : "border-red-400/40 bg-gradient-to-b from-red-50 to-card dark:from-red-950/30 dark:to-card"}`}>
+            <CardContent className="py-5">
+              <div className={`text-xl font-bold mb-2 ${correct ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>{correct ? "Correct" : "Incorrect"}</div>
               {!correct && (
                 <div className="text-sm text-muted-foreground mb-2">
                   Correct answer:{" "}
